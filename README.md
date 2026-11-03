@@ -153,6 +153,28 @@ route on that carrier, so it inherits the server's loopback bind. Responses are 
 - `client.js` talks to `index.js` through the Host route described above rather than a generated
   Remote namespace, so the bundle stays dependency-free.
 
+## Releasing
+
+Releases are tag-driven and manual. There is no CI and no package registry: the plugin is installed
+from this directory, so a release is a tag plus notes. `CHANGELOG.md` is the single source of those
+notes.
+
+Land changes on `master`, write what users will notice under `## Unreleased` in `CHANGELOG.md`, then
+run one command:
+
+```bash
+npm run release            # tag the version already in package.json
+npm run release -- patch   # or minor / major / an explicit 1.2.0
+npm run release -- --dry-run
+```
+
+The script refuses to run on a dirty tree or off `master`, bumps `package.json`, promotes
+`Unreleased` into a dated `## vX.Y.Z — YYYY-MM-DD` heading, commits `release: vX.Y.Z`, creates the
+annotated tag, pushes `master` and the tag, and opens a GitHub Release whose body is that changelog
+section. A version that already shipped fails on its existing tag instead of being moved.
+
+Notes are written for users: what changed, and what to do about it when upgrading.
+
 ## License
 
 Released under the [MIT License](LICENSE).

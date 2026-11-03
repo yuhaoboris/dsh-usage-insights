@@ -14,6 +14,9 @@
   "bugs": {
     "url": "https://github.com/yuhaoboris/dsh-usage-insights/issues"
   },
+  "scripts": {
+    "release": "node script/release.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
