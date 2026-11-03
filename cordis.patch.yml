@@ -1,0 +1,7 @@
+- insert:
+    - id: usage-insights
+      name: 'dsh-usage-insights'
+      config:
+        budgetUsd: 20
+        timelineDays: 30
+        includeSubagents: true
