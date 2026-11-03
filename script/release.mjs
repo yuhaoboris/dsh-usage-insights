@@ -161,4 +161,5 @@ execFileSync(
   { cwd: root, stdio: "inherit" },
 )
 
-console.log(`\nreleased https://github.com/${pkg.repository.url.replace(/^git\+|\.git$/g, "")}/releases/tag/${tag}`)
+const repoUrl = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "")
+console.log(`\nreleased ${repoUrl}/releases/tag/${tag}`)
