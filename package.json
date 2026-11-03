@@ -5,6 +5,15 @@
   "type": "module",
   "description": "Token usage, estimated cost and budget across real sessions, with a consumption timeline, per-session breakdown, and live CPU monitoring.",
   "license": "MIT",
+  "author": "Boris Yu (https://github.com/yuhaoboris)",
+  "homepage": "https://github.com/yuhaoboris/dsh-usage-insights#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuhaoboris/dsh-usage-insights.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuhaoboris/dsh-usage-insights/issues"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",

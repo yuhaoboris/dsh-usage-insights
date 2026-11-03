@@ -30,10 +30,19 @@ Developed and verified against DSH `0.2.1-rc.5`.
 
 ## Install
 
-Install this directory as a bundle into a profile. In the Harness Web UI, use **Plugins → Add** and
-select this folder; the profile's bundle selection and `dsh.profile.bundles` are updated for you.
-Programmatic callers can use the `plugin_manager` action `install_bundle` with this directory as the
-absolute `target`.
+Clone the repository, then install the cloned directory as a bundle into a profile:
+
+```bash
+git clone https://github.com/yuhaoboris/dsh-usage-insights.git
+# SSH instead of HTTPS:
+# git clone git@github.com:yuhaoboris/dsh-usage-insights.git
+```
+
+In the Harness Web UI, use **Plugins → Add** and select the cloned `dsh-usage-insights` folder; the
+profile's bundle selection and `dsh.profile.bundles` are updated for you. Programmatic callers can use
+the `plugin_manager` action `install_bundle` with the cloned directory as the absolute `target`.
+
+The plugin ships no runtime dependencies, so there is no `npm install` step: install the folder as-is.
 
 The bundle inserts this row through its `cordis.patch.yml`:
 
