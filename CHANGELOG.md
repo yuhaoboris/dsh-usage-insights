@@ -6,6 +6,10 @@ the plugin rather than as a git log.
 
 ## Unreleased
 
+Nothing yet.
+
+## v1.0.0 — 2026-11-03
+
 ### Added
 
 - A **用量统计 / Usage Stats** sidebar entry that opens a statistics panel built from the profile's
