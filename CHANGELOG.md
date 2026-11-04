@@ -6,7 +6,28 @@ the plugin rather than as a git log.
 
 ## Unreleased
 
-Nothing yet.
+### Fixed
+
+- The timeline no longer draws an empty outlined box around the most recent day. That frame was the
+  full-height bar track, not the bar itself; today is now marked on its date label instead.
+- Daily bars sit on a labelled value axis with gridlines, so magnitudes are readable at a glance and
+  zero-usage days no longer look like rendering gaps.
+- The output-only view uses the same green as its legend entry (the bars were black before).
+- A day with a small but non-zero total keeps a 2px stub instead of vanishing.
+- The range selector stays in sync when the Host returns fewer days than the 14-day default.
+- The panel scrolls inside the host's fixed-height main area instead of being clipped at the fold,
+  so the CPU, rates and footer sections are reachable again.
+- The session table paginates at 10 rows per page with a range readout and page buttons instead of
+  stopping at 12 behind a show-all button. Column widths stay fixed across pages, and the header
+  stays pinned while the list scrolls.
+
+### Added
+
+- Hovering a day in the timeline shows its cache-read, input, output, total and cost figures.
+
+### Changed
+
+- Sessions no longer carry a "live" badge, and the session KPI no longer splits out live sessions.
 
 ## v1.0.0 — 2026-11-03
 

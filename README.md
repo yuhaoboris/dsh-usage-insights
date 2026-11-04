@@ -11,10 +11,10 @@ all folded from committed `assistant/message` usage records.
 
 | Area | Content |
 |---|---|
-| KPI row | Total tokens, session count (live / sub-agent split), estimated cost, budget remaining |
+| KPI row | Total tokens, session count with sub-agent split, estimated cost, budget remaining |
 | Budget | Spent vs. budget, progress bar, today, 7-day daily average, 30-day projection, days remaining |
-| Timeline | Daily bars over 7 / 14 / 30 days; stacked cache-read / input / output tokens, output-only tokens, or cost |
-| Sessions | Sortable, searchable table of every session: model, token total, estimated cost, last activity; expanding a row reveals the token breakdown, models, working directory, session ID, and parent session |
+| Timeline | Daily bars over 7 / 14 / 30 days on a labelled value axis; stacked cache-read / input / output tokens, output-only tokens, or cost; hovering a day shows its exact breakdown, and today is marked on the axis |
+| Sessions | Sortable, searchable table of every session, 10 per page with page controls and a pinned header: model, token total, estimated cost, last activity; expanding a row reveals the token breakdown, models, working directory, session ID, and parent session |
 | CPU | Process CPU (per-core and machine share), system CPU, load 1/5/15, memory, uptime, per-core bars, and a rolling sparkline of recent samples |
 | Rates | Collapsible table of the estimated USD-per-1M-token rates used for the cost figure |
 

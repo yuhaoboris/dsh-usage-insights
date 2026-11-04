@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react')
     const h = React.createElement
-    const { useEffect, useMemo, useState } = React
+    const { useEffect, useMemo, useRef, useState } = React
 
     const NS = 'usage-insights'
     const ENDPOINT = '/usage-insights/snapshot'
@@ -34,7 +34,6 @@ window.__ModuleLoader__.load({
         output: '输出',
         cacheWrite: '缓存写入',
         reasoning: '推理',
-        live: '进行中',
         subagent: '子会话',
         avgPerDay: '平均',
         perDay: '/ 天',
@@ -52,11 +51,11 @@ window.__ModuleLoader__.load({
         range: '范围',
         sessionsTitle: '各会话用量与成本',
         search: '搜索会话标题、目录或 ID',
+        prev: '上一页',
+        next: '下一页',
         session: '会话',
         model: '模型',
         lastActive: '最近活动',
-        showAll: '显示全部',
-        showLess: '收起',
         breakdown: 'Token 明细',
         cwd: '工作目录',
         provider: '提供商',
@@ -107,7 +106,6 @@ window.__ModuleLoader__.load({
         output: 'Output',
         cacheWrite: 'Cache write',
         reasoning: 'Reasoning',
-        live: 'live',
         subagent: 'sub-agent',
         avgPerDay: 'Avg',
         perDay: '/ day',
@@ -125,11 +123,11 @@ window.__ModuleLoader__.load({
         range: 'Range',
         sessionsTitle: 'Usage and cost by session',
         search: 'Search title, directory, or ID',
+        prev: 'Previous page',
+        next: 'Next page',
         session: 'Session',
         model: 'Model',
         lastActive: 'Last active',
-        showAll: 'Show all',
-        showLess: 'Show less',
         breakdown: 'Token breakdown',
         cwd: 'Working directory',
         provider: 'Provider',
@@ -165,8 +163,9 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
-.ui-root { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 24px 28px 48px; color: var(--dsw-alias-label-primary); font-size: 13px; line-height: 1.5; }
-.ui-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ui-root { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 0 28px 48px; color: var(--dsw-alias-label-primary); font-size: 13px; line-height: 1.5; height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.ui-root > * { flex: none; }
+.ui-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 24px; }
 .ui-title { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
 .ui-sub { margin: 4px 0 0; color: var(--dsw-alias-label-secondary); font-size: 12px; }
 .ui-head-actions { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
@@ -193,17 +192,33 @@ window.__ModuleLoader__.load({
 .ui-budget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; }
 .ui-budget-cell { background: var(--dsw-alias-bg-layer-2); border-radius: 8px; padding: 8px 10px; }
 .ui-budget-cell b { display: block; font-size: 15px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.ui-bars { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding-top: 6px; }
-.ui-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; height: 100%; position: relative; }
-.ui-bar-track { flex: 1; display: flex; flex-direction: column-reverse; justify-content: flex-start; min-height: 1px; }
-.ui-bar-seg { width: 100%; border-radius: 2px 2px 0 0; min-height: 0; }
+.ui-chart { display: grid; grid-template-columns: 46px minmax(0, 1fr); grid-template-rows: 168px 18px; column-gap: 10px; margin-top: 4px; }
+.ui-axis { position: relative; grid-column: 1; grid-row: 1; min-height: 0; }
+.ui-axis-label { position: absolute; right: 0; transform: translateY(50%); color: var(--dsw-alias-label-secondary); font-size: 10px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-axis-label.is-zero { transform: none; }
+.ui-plot { position: relative; grid-column: 2; grid-row: 1; min-width: 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ui-grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--dsw-alias-border-l1); opacity: .7; }
+.ui-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 4px; }
+.ui-bar-col { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+.ui-bar-track { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.ui-bar-seg { width: 100%; max-width: 52px; margin: 0 auto; }
+.ui-bar-seg.is-cap { border-radius: 3px 3px 0 0; }
 .ui-bar-seg.cache { background: var(--dsw-alias-brand-primary); opacity: .32; }
 .ui-bar-seg.input { background: var(--dsw-alias-brand-primary); opacity: .62; }
 .ui-bar-seg.output { background: var(--dsw-alias-state-success-primary); }
-.ui-bar-seg.single { background: var(--dsw-alias-brand-primary); }
 .ui-bar-seg.cost { background: var(--dsw-alias-state-warn-primary); }
-.ui-bar-label { display: block; height: 16px; color: var(--dsw-alias-label-secondary); font-size: 9px; text-align: center; white-space: nowrap; }
-.ui-bar-col.is-today .ui-bar-track { box-shadow: inset 0 0 0 1px var(--dsw-alias-brand-primary); border-radius: 3px; }
+.ui-dates { grid-column: 2; grid-row: 2; display: flex; align-items: flex-start; gap: 4px; padding-top: 5px; }
+.ui-date { position: relative; flex: 1 1 0; min-width: 0; display: flex; justify-content: center; color: var(--dsw-alias-label-secondary); font-size: 10px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-date.is-today { color: var(--dsw-alias-label-primary); font-weight: 600; }
+.ui-date.is-today::after { content: ''; position: absolute; left: 50%; bottom: -4px; width: 12px; height: 2px; margin-left: -6px; border-radius: 1px; background: var(--dsw-alias-brand-primary); }
+.ui-tip { display: none; position: absolute; z-index: 8; left: 50%; transform: translateX(-50%); bottom: min(calc(var(--bar, 0%) + 10px), calc(100% - 118px)); width: 168px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: var(--dsw-alias-bg-layer-1); box-shadow: 0 8px 24px rgba(0, 0, 0, .16); pointer-events: none; text-align: left; }
+.ui-bar-col:hover .ui-tip { display: block; }
+.ui-bar-col:first-child .ui-tip { left: 0; transform: none; }
+.ui-bar-col:last-child .ui-tip { left: auto; right: 0; transform: none; }
+.ui-tip-head { margin-bottom: 5px; color: var(--dsw-alias-label-primary); font-size: 11px; font-weight: 600; }
+.ui-tip-row { display: flex; align-items: center; gap: 6px; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 16px; }
+.ui-tip-row b { margin-left: auto; color: var(--dsw-alias-label-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ui-tip-spacer { width: 8px; flex: none; }
 .ui-legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--dsw-alias-label-secondary); font-size: 11px; margin-top: 10px; }
 .ui-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .ui-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; background: var(--dsw-alias-brand-primary); }
@@ -211,20 +226,29 @@ window.__ModuleLoader__.load({
 .ui-dot.input { opacity: .62; }
 .ui-dot.output { background: var(--dsw-alias-state-success-primary); }
 .ui-dot.cost { background: var(--dsw-alias-state-warn-primary); }
-.ui-table-wrap { overflow-x: auto; margin: 0 -4px; }
-.ui-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 560px; }
-.ui-table th { text-align: left; font-weight: 500; color: var(--dsw-alias-label-secondary); padding: 6px 8px; border-bottom: 1px solid var(--dsw-alias-border-l1); white-space: nowrap; }
+.ui-table-wrap { margin: 0 -4px; }
+.ui-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12px; min-width: 560px; }
+.ui-table th { position: sticky; top: 0; z-index: 1; text-align: left; font-weight: 500; color: var(--dsw-alias-label-secondary); padding: 6px 8px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); white-space: nowrap; }
 .ui-table th.ui-sortable { cursor: pointer; user-select: none; }
 .ui-table th.ui-sortable:hover { color: var(--dsw-alias-label-primary); }
 .ui-table td { padding: 8px; border-bottom: 1px solid var(--dsw-alias-border-l1); vertical-align: top; }
 .ui-table tr:last-child td { border-bottom: 0; }
+.ui-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.ui-pager-info { color: var(--dsw-alias-label-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ui-pager-pages { display: flex; align-items: center; gap: 4px; }
+.ui-pager .ui-btn { min-width: 26px; padding: 3px 7px; font-size: 11px; line-height: 16px; text-align: center; font-variant-numeric: tabular-nums; }
+.ui-pager .ui-btn:disabled { opacity: .45; cursor: default; }
+.ui-pager .ui-pager-step { padding: 3px 8px; font-size: 14px; line-height: 16px; }
+.ui-pager .ui-btn:disabled:hover { border-color: var(--dsw-alias-border-l1); }
+.ui-pager-page.is-current { background: var(--dsw-alias-brand-primary); border-color: var(--dsw-alias-brand-primary); color: var(--dsw-alias-bg-base); }
+.ui-pager-page.is-current:hover { border-color: var(--dsw-alias-brand-primary); }
+.ui-pager-gap { padding: 0 2px; color: var(--dsw-alias-label-secondary); font-size: 11px; }
 .ui-row { cursor: pointer; }
 .ui-row:hover td { background: var(--dsw-alias-bg-layer-2); }
 .ui-row:focus-visible { outline: 1px solid var(--dsw-alias-brand-primary); outline-offset: -1px; }
 .ui-session-title { display: flex; align-items: center; gap: 6px; font-weight: 500; min-width: 0; }
 .ui-session-name { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-badge { border: 1px solid var(--dsw-alias-border-l1); color: var(--dsw-alias-label-secondary); border-radius: 999px; padding: 0 6px; font-size: 10px; line-height: 16px; white-space: nowrap; }
-.ui-badge-live { color: var(--dsw-alias-state-success-primary); border-color: var(--dsw-alias-state-success-primary); }
 .ui-badge-error { color: var(--dsw-alias-state-error-primary); border-color: var(--dsw-alias-state-error-primary); }
 .ui-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
 .ui-search { width: 100%; box-sizing: border-box; border: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); border-radius: 7px; padding: 6px 9px; font: inherit; font-size: 12px; }
@@ -254,9 +278,12 @@ window.__ModuleLoader__.load({
 .ui-empty { color: var(--dsw-alias-label-secondary); font-size: 12px; padding: 18px 0; text-align: center; }
 .ui-loading { color: var(--dsw-alias-label-secondary); font-size: 12px; padding: 28px 0; text-align: center; }
 @media (max-width: 640px) {
-  .ui-root { padding: 16px 16px 32px; }
+  .ui-root { padding: 0 16px 32px; }
+  .ui-head { padding-top: 16px; }
   .ui-kpi-value { font-size: 20px; }
-  .ui-bar-label { display: none; }
+  .ui-chart { grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: 148px 18px; column-gap: 6px; }
+  .ui-axis-label, .ui-date { font-size: 9px; }
+  .ui-table-wrap { overflow-x: auto; }
 }
 `
 
@@ -289,6 +316,59 @@ window.__ModuleLoader__.load({
       const n = Number(value)
       if (!Number.isFinite(n)) return '—'
       return '$' + n.toFixed(3)
+    }
+
+    const TOKEN_STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
+    const MONEY_STEPS = [1, 2, 2.5, 5, 10]
+    const SESSIONS_PER_PAGE = 10
+
+    function niceStep(raw, steps) {
+      if (!(raw > 0) || !Number.isFinite(raw)) return 1
+      const base = Math.pow(10, Math.floor(Math.log10(raw)))
+      const ratio = raw / base
+      for (let index = 0; index < steps.length; index += 1) {
+        if (ratio <= steps[index]) return steps[index] * base
+      }
+      return 10 * base
+    }
+
+    function axisScale(max, metric) {
+      if (!(max > 0) || !Number.isFinite(max)) return { top: 0, ticks: [] }
+      const step = niceStep(max / 4, metric === 'cost' ? MONEY_STEPS : TOKEN_STEPS)
+      return { top: step * 4, ticks: [0, step, step * 2, step * 3, step * 4] }
+    }
+
+    function fmtAxisValue(value, metric) {
+      const n = Number(value)
+      if (!Number.isFinite(n)) return '—'
+      if (metric === 'cost') return '$' + n.toFixed(2)
+      if (n <= 0) return '0'
+      const brief = (part) => String(Math.round(part * 10) / 10)
+      if (n >= 1e9) return brief(n / 1e9) + 'B'
+      if (n >= 1e6) return brief(n / 1e6) + 'M'
+      if (n >= 1e3) return brief(n / 1e3) + 'K'
+      return String(Math.round(n))
+    }
+
+    function pageWindow(current, total) {
+      if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1)
+      const items = [1]
+      const start = Math.max(2, current - 2)
+      const end = Math.min(total - 1, current + 2)
+      if (start > 2) items.push('gap-start')
+      for (let page = start; page <= end; page += 1) items.push(page)
+      if (end < total - 1) items.push('gap-end')
+      items.push(total)
+      return items
+    }
+
+    function monthDay(date) {
+      return typeof date === 'string' && date.length >= 10 ? date.slice(5).replace('-', '/') : ''
+    }
+
+    function localDayKey(time) {
+      const date = new Date(time)
+      return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
     }
 
     function fmtPercent(value) {
@@ -460,18 +540,52 @@ window.__ModuleLoader__.load({
 
     function TimelineCard(props) {
       const { data, t } = props
-      const [range, setRange] = useState(14)
-      const [metric, setMetric] = useState('tokens')
       const allDays = Array.isArray(data.timeline) ? data.timeline : []
       const ranges = [7, 14, 30].filter((value) => value <= Math.max(7, allDays.length))
+      const [range, setRange] = useState(ranges.indexOf(14) !== -1 ? 14 : 7)
+      const [metric, setMetric] = useState('tokens')
       const days = allDays.slice(-Math.min(range, allDays.length))
       const dayValue = (day) => {
         if (metric === 'cost') return Number(day.costUsd) || 0
         if (metric === 'output') return Number(day.outputTokens) || 0
         return Number(day.totalTokens) || 0
       }
+      const seriesFor = (day) => {
+        if (metric === 'tokens') {
+          return [
+            { key: 'output', value: Number(day.outputTokens) || 0 },
+            { key: 'input', value: Number(day.inputTokens) || 0 },
+            { key: 'cache', value: Number(day.cacheReadTokens) || 0 },
+          ]
+        }
+        return [{ key: metric === 'cost' ? 'cost' : 'output', value: Math.max(0, dayValue(day)) }]
+      }
       const max = Math.max(0, ...days.map(dayValue))
-      const labelEvery = Math.max(1, Math.ceil(days.length / 7))
+      const { top, ticks } = axisScale(max, metric)
+      const todayKey = localDayKey(Date.now())
+      const plotRef = useRef(null)
+      const [plotWidth, setPlotWidth] = useState(0)
+      const hasChart = max > 0
+      useEffect(() => {
+        const node = plotRef.current
+        if (!node || typeof ResizeObserver === 'undefined') return undefined
+        const observer = new ResizeObserver((entries) => {
+          if (entries.length) setPlotWidth(entries[0].contentRect.width)
+        })
+        observer.observe(node)
+        return () => observer.disconnect()
+      }, [hasChart])
+      const maxLabels = plotWidth > 0 ? Math.max(2, Math.floor(plotWidth / 52)) : 8
+      const labelStep = Math.max(1, Math.ceil(days.length / maxLabels))
+      const pitch = days.length > 0 && plotWidth > 0 ? plotWidth / days.length : 0
+      const labelIndexes = new Set()
+      for (let index = 0; index < days.length; index += labelStep) labelIndexes.add(index)
+      if (days.length > 0) {
+        const lastIndex = days.length - 1
+        const previous = lastIndex - (lastIndex % labelStep)
+        if (previous !== lastIndex && (lastIndex - previous) * pitch < 34) labelIndexes.delete(previous)
+        labelIndexes.add(lastIndex)
+      }
       const sums = days.reduce(
         (acc, day) => {
           acc.input += Number(day.inputTokens) || 0
@@ -482,6 +596,14 @@ window.__ModuleLoader__.load({
         },
         { input: 0, cacheRead: 0, output: 0, cost: 0 },
       )
+      const tipRow = (label, value, dot) =>
+        h(
+          'div',
+          { className: 'ui-tip-row', key: label },
+          dot ? h('span', { className: 'ui-dot ' + dot }) : h('span', { className: 'ui-tip-spacer' }),
+          h('span', null, label),
+          h('b', null, value),
+        )
       return h(
         'div',
         { className: 'ui-card' },
@@ -530,49 +652,91 @@ window.__ModuleLoader__.load({
             ),
           ),
         ),
-        max <= 0
+        max <= 0 || top <= 0
           ? h('div', { className: 'ui-empty' }, t('noUsage'))
           : h(
               'div',
-              { className: 'ui-bars', role: 'img', 'aria-label': t('timeline') },
-              days.map((day, index) => {
-                const value = dayValue(day)
-                const heightFor = (part) => (max > 0 ? (part / max) * 100 : 0)
-                const segments =
-                  metric === 'tokens'
-                    ? [
-                        { key: 'cache', value: Number(day.cacheReadTokens) || 0 },
-                        { key: 'input', value: Number(day.inputTokens) || 0 },
-                        { key: 'output', value: Number(day.outputTokens) || 0 },
-                      ]
-                    : [{ key: metric === 'cost' ? 'cost' : 'single', value: Math.max(0, value) }]
-                const tip =
-                  day.date +
-                  ' · ' +
-                  fmtTokens(day.totalTokens) +
-                  ' ' +
-                  t('tokensUnit') +
-                  ' · ' +
-                  fmtUsd(day.costUsd)
-                return h(
-                  'div',
-                  { className: 'ui-bar-col' + (index === days.length - 1 ? ' is-today' : ''), key: day.date, title: tip },
+              { className: 'ui-chart' },
+              h(
+                'div',
+                { className: 'ui-axis', 'aria-hidden': 'true' },
+                ticks.map((tick, index) =>
                   h(
-                    'div',
-                    { className: 'ui-bar-track' },
-                    segments.map((segment) =>
-                      h('div', {
-                        key: segment.key,
-                        className: 'ui-bar-seg ' + segment.key,
-                        style: { height: segment.value > 0 ? Math.max(1, heightFor(segment.value)) + '%' : 0 },
-                      }),
-                    ),
+                    'span',
+                    {
+                      key: index,
+                      className: 'ui-axis-label' + (tick === 0 ? ' is-zero' : ''),
+                      style: { bottom: (tick / top) * 100 + '%' },
+                    },
+                    fmtAxisValue(tick, metric),
                   ),
-                  index % labelEvery === 0 || index === days.length - 1
-                    ? h('span', { className: 'ui-bar-label' }, day.date ? day.date.slice(5).replace('-', '/') : '')
-                    : h('span', { className: 'ui-bar-label' }, ''),
-                )
-              }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ui-plot', ref: plotRef },
+                h(
+                  'div',
+                  { className: 'ui-grid', 'aria-hidden': 'true' },
+                  ticks.map((tick, index) =>
+                    index === 0 ? null : h('div', { key: index, className: 'ui-grid-line', style: { bottom: (tick / top) * 100 + '%' } }),
+                  ),
+                ),
+                h(
+                  'div',
+                  { className: 'ui-bars', role: 'img', 'aria-label': t('timeline') },
+                  days.map((day) => {
+                    const series = seriesFor(day)
+                    const total = series.reduce((sum, item) => sum + item.value, 0)
+                    const barPct = top > 0 ? Math.min(100, (total / top) * 100) : 0
+                    const cap = series.find((item) => item.value > 0)
+                    const isToday = day.date === todayKey
+                    return h(
+                      'div',
+                      {
+                        key: day.date,
+                        className: 'ui-bar-col' + (isToday ? ' is-today' : ''),
+                        style: { '--bar': barPct + '%' },
+                      },
+                      h(
+                        'div',
+                        { className: 'ui-bar-track' },
+                        series.map((item) =>
+                          h('div', {
+                            key: item.key,
+                            className: 'ui-bar-seg ' + item.key + (cap && item.key === cap.key ? ' is-cap' : ''),
+                            style: {
+                              height: item.value > 0 ? (item.value / top) * 100 + '%' : 0,
+                              minHeight: item.value > 0 ? '2px' : 0,
+                            },
+                          }),
+                        ),
+                      ),
+                      h(
+                        'div',
+                        { className: 'ui-tip' },
+                        h('div', { className: 'ui-tip-head' }, monthDay(day.date) + (isToday ? ' · ' + t('today') : '')),
+                        tipRow(t('totalTokens'), fmtTokens(day.totalTokens)),
+                        tipRow(t('cache'), fmtTokens(day.cacheReadTokens), 'cache'),
+                        tipRow(t('input'), fmtTokens(day.inputTokens), 'input'),
+                        tipRow(t('output'), fmtTokens(day.outputTokens), 'output'),
+                        tipRow(t('cost'), fmtUsd(day.costUsd)),
+                      ),
+                    )
+                  }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ui-dates', 'aria-hidden': 'true' },
+                days.map((day, index) =>
+                  h(
+                    'span',
+                    { key: day.date, className: 'ui-date' + (day.date === todayKey ? ' is-today' : '') },
+                    labelIndexes.has(index) ? monthDay(day.date) : '',
+                  ),
+                ),
+              ),
             ),
         h(
           'div',
@@ -596,7 +760,7 @@ window.__ModuleLoader__.load({
       const [sortKey, setSortKey] = useState('costUsd')
       const [sortDir, setSortDir] = useState(-1)
       const [expanded, setExpanded] = useState(null)
-      const [showAll, setShowAll] = useState(false)
+      const [page, setPage] = useState(1)
       const sessions = Array.isArray(data.sessions) ? data.sessions : []
       const rows = useMemo(() => {
         const needle = query.trim().toLowerCase()
@@ -612,8 +776,17 @@ window.__ModuleLoader__.load({
         return filtered.slice().sort((a, b) => (valueOf(a) - valueOf(b)) * sortDir)
       }, [sessions, query, sortKey, sortDir])
 
-      const visible = showAll ? rows : rows.slice(0, 12)
+      const totalPages = Math.max(1, Math.ceil(rows.length / SESSIONS_PER_PAGE))
+      const currentPage = Math.min(Math.max(1, page), totalPages)
+      const pageStart = (currentPage - 1) * SESSIONS_PER_PAGE
+      const pageRows = rows.slice(pageStart, pageStart + SESSIONS_PER_PAGE)
+      const goToPage = (value) => {
+        setPage(Math.min(Math.max(1, value), totalPages))
+        setExpanded(null)
+      }
       const toggleSort = (key) => {
+        setPage(1)
+        setExpanded(null)
         if (sortKey === key) setSortDir((value) => -value)
         else {
           setSortKey(key)
@@ -637,7 +810,11 @@ window.__ModuleLoader__.load({
           value: query,
           placeholder: t('search'),
           'aria-label': t('search'),
-          onChange: (event) => setQuery(event.target.value),
+          onChange: (event) => {
+            setQuery(event.target.value)
+            setPage(1)
+            setExpanded(null)
+          },
           style: { marginBottom: '10px' },
         }),
         rows.length === 0
@@ -648,6 +825,15 @@ window.__ModuleLoader__.load({
               h(
                 'table',
                 { className: 'ui-table' },
+                h(
+                  'colgroup',
+                  null,
+                  h('col', null),
+                  h('col', { style: { width: '128px' } }),
+                  h('col', { style: { width: '100px' } }),
+                  h('col', { style: { width: '92px' } }),
+                  h('col', { style: { width: '150px' } }),
+                ),
                 h(
                   'thead',
                   null,
@@ -676,7 +862,7 @@ window.__ModuleLoader__.load({
                 h(
                   'tbody',
                   null,
-                  visible.map((session) => {
+                  pageRows.map((session) => {
                     const isOpen = expanded === session.id
                     const modelLabel =
                       session.models && session.models.length
@@ -703,7 +889,6 @@ window.__ModuleLoader__.load({
                           'div',
                           { className: 'ui-session-title' },
                           h('span', { className: 'ui-session-name', title: session.title }, session.title || session.id.slice(0, 10)),
-                          session.live ? h('span', { className: 'ui-badge ui-badge-live' }, t('live')) : null,
                           session.origin === 'subagent' ? h('span', { className: 'ui-badge' }, t('subagent')) : null,
                           session.readError ? h('span', { className: 'ui-badge ui-badge-error' }, t('readError')) : null,
                         ),
@@ -753,14 +938,53 @@ window.__ModuleLoader__.load({
                 ),
               ),
             ),
-        rows.length > 12
+        rows.length > 0 && totalPages > 1
           ? h(
               'div',
-              { style: { marginTop: '10px', textAlign: 'center' } },
+              { className: 'ui-pager' },
+              h('span', { className: 'ui-pager-info' }, pageStart + 1 + '–' + (pageStart + pageRows.length) + ' / ' + rows.length),
               h(
-                'button',
-                { type: 'button', className: 'ui-btn', onClick: () => setShowAll((value) => !value) },
-                showAll ? t('showLess') : t('showAll') + ' (' + rows.length + ')',
+                'div',
+                { className: 'ui-pager-pages' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'ui-btn ui-pager-step',
+                    disabled: currentPage <= 1,
+                    'aria-label': t('prev'),
+                    title: t('prev'),
+                    onClick: () => goToPage(currentPage - 1),
+                  },
+                  '‹',
+                ),
+                pageWindow(currentPage, totalPages).map((item) =>
+                  typeof item === 'number'
+                    ? h(
+                        'button',
+                        {
+                          key: item,
+                          type: 'button',
+                          className: 'ui-btn ui-pager-page' + (item === currentPage ? ' is-current' : ''),
+                          'aria-current': item === currentPage ? 'page' : undefined,
+                          onClick: () => goToPage(item),
+                        },
+                        String(item),
+                      )
+                    : h('span', { key: item, className: 'ui-pager-gap' }, '…'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'ui-btn ui-pager-step',
+                    disabled: currentPage >= totalPages,
+                    'aria-label': t('next'),
+                    title: t('next'),
+                    onClick: () => goToPage(currentPage + 1),
+                  },
+                  '›',
+                ),
               ),
             )
           : null,
@@ -1018,7 +1242,7 @@ window.__ModuleLoader__.load({
           h(Kpi, {
             label: t('sessions'),
             value: String(totals.sessions || 0),
-            sub: t('live') + ' ' + (totals.liveSessions || 0) + ' · ' + t('subagent') + ' ' + (totals.subagentSessions || 0),
+            sub: t('subagent') + ' ' + (totals.subagentSessions || 0),
           }),
           h(Kpi, {
             label: t('estCost'),
